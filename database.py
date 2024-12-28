@@ -38,5 +38,6 @@ def fetch_data(starttime=None, endtime=None, limit=None):
 
 if __name__ == "__main__":
     # 示例使用
-    data = fetch_data()
-    print(data)
+    import json
+    data = fetch_data(starttime=1732996800000000000, endtime=1735156800000000000, limit=20)
+    print(json.dumps(data))
