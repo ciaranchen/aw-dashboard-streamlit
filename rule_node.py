@@ -1,11 +1,16 @@
+import itertools
+from functools import cached_property
+
 from jsonata import Jsonata
 from typing import List, Optional, Any
 
 
 class RuleNode:
-    def __init__(self, id_: int, name: List[str], color: str, weight: float, rule: Optional[str] = None,
-                 parent: Optional['RuleNode'] = None):
-        self.id: int = id_
+    id_iter = itertools.count()
+
+    def __init__(self, name: List[str], color: str, weight: float,
+                 parent: Optional['RuleNode'] = None, rule: Optional[str] = None):
+        self.id: int = next(self.id_iter)
         self.name: List[str] = name
         self.color: str = color
         self.weight: float = weight
@@ -25,6 +30,7 @@ class RuleNode:
             print(f"Error compiling rule {self.rule}: {e}")
             return None
 
+    @cached_property
     def flatten(self) -> List['RuleNode']:
         flattened = []
 
@@ -42,48 +48,40 @@ class RuleNode:
             child.depth_first_search(callback)
 
     @staticmethod
-    def classify_data(data: List[dict], root: 'RuleNode') -> List[dict]:
-        result: List[dict] = []
-        for item in data:
-            deepest_matching_rule: Optional['RuleNode'] = None
-
-            def match_rule(node: 'RuleNode') -> bool:
-                expression = node.compile_rule()
-                if expression is None:
-                    return False
-                try:
-                    return bool(expression.evaluate(item))
-                except Exception as e:
-                    print(f"Error evaluating rule {node.rule}: {e}")
-                    return False
-
-            def dfs(node: 'RuleNode') -> None:
-                nonlocal deepest_matching_rule
-                if match_rule(node):
-                    deepest_matching_rule = node
-                for child in node.children:
-                    dfs(child)
-
-            dfs(root)
-
-            if deepest_matching_rule:
-                item["category"] = deepest_matching_rule
-            else:
-                item["category"] = root
-            result.append(item)
-        return result
+    def classify_data(data: List[dict], root: 'RuleNode') -> List[int]:
+        classified_data = [0 for i in data]
+        # sorted by rule depth
+        rule_list = sorted(root.flatten, key=lambda x: len(x.name))
+        for rule in rule_list:
+            expression = rule.compile_rule()
+            if expression is None:
+                continue
+            items = expression.evaluate(data)
+            try:
+                assert len(items) == len(data)
+                # 这个地方应该由用户负责语句的正确性
+                for item in items:
+                    assert isinstance(item, bool)
+            except Exception as e:
+                print(f"Error evaluating rule {rule.rule}: {e}")
+                continue
+            for i, item in enumerate(items):
+                if item:
+                    classified_data[i] = rule.id
+        return classified_data
 
     @staticmethod
-    def build_sunburst_data(data: List[dict], root: 'RuleNode') -> dict:
+    def build_sunburst_data(data: List[dict], classified_data: List[int], root: 'RuleNode') -> dict:
 
         def add_duration(leaf_node: 'RuleNode', duration):
             rule_durations[leaf_node.id] += duration
             if leaf_node.parent:
                 add_duration(leaf_node.parent, duration)
 
-        rule_durations = {rule.id: 0 for rule in root.flatten()}
-        for item in data:
-            add_duration(item['category'], item['endtime'] - item['starttime'])
+        rule_lists = {rule.id: rule for rule in root.flatten}
+        rule_durations = {rule.id: 0 for rule in rule_lists.values()}
+        for item, category_id in zip(data, classified_data):
+            add_duration(rule_lists[category_id], item['endtime'] - item['starttime'])
 
         def build_node_data(index: int, node: 'RuleNode') -> dict:
             children = []
@@ -106,4 +104,4 @@ class RuleNode:
             "itemStyle": {"color": root.color},
             "children": []
         })
-        return graph_root
+        return graph_root['children']

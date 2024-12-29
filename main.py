@@ -17,13 +17,11 @@ def main():
     classified_data = RuleNode.classify_data(data, root)
 
     # 绘制 Sunburst 图
-    sunburst_data = RuleNode.build_sunburst_data(classified_data, root)
-    # print(sunburst_data)
-    # return
+    sunburst_data = RuleNode.build_sunburst_data(data, classified_data, root)
 
     # 使用pyecharts绘制饼图
     sunburst = Sunburst()
-    sunburst.add("", [sunburst_data])
+    sunburst.add("", sunburst_data)
     sunburst.set_global_opts(title_opts=opts.TitleOpts(title="Data Classification Result"))
     st_pyecharts = st.components.v1.html(sunburst.render_embed(), height=400)
 
