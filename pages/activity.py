@@ -2,17 +2,11 @@ import datetime
 
 import pytz
 import streamlit as st
-from pyecharts.charts import Sunburst
-from pyecharts import options as opts
-
 import plotly.express as px
 
-
 from database import ActivityWatchDataBase
-from rule_node import RuleNode
-from rules import root
+from rule_node import ClassifyMethod
 from utils import date2timestamp
-
 
 
 def show_activity():
@@ -70,13 +64,20 @@ def show_activity():
             bucket_ids=selected_rows)
 
         # 对数据进行分类
-        classified_data = RuleNode.classify_data(events_data, root)
+        cm = ClassifyMethod()
+        classified_data = cm.classify_data(events_data)
 
         # 绘制 Sunburst 图
-        sunburst_data = RuleNode.build_sunburst_data(events_data, classified_data, root)
+        sunburst_data = cm.build_sunburst_data(events_data, classified_data)
 
-        # 使用pyecharts绘制饼图
-        sunburst = Sunburst()
-        sunburst.add("", sunburst_data)
-        sunburst.set_global_opts(title_opts=opts.TitleOpts(title="Data Classification Result"))
-        st_pyecharts = st.components.v1.html(sunburst.render_embed(), height=400)
+        fig = px.sunburst(
+            sunburst_data,
+            names="names",
+            parents='parents',
+            values='durations'
+        )
+        st.plotly_chart(fig)
+
+
+if __name__ == '__main__':
+    show_activity()

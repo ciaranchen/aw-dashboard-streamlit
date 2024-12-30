@@ -3,12 +3,10 @@ import datetime
 import pandas as pd
 import pytz
 import streamlit as st
-from pyecharts.charts import Bar
-from pyecharts import options as opts
-
-
+import plotly.express as px
 
 from database import ActivityWatchDataBase
+from rule_node import ClassifyMethod
 from utils import date2timestamp, timestamp2datetime
 
 
@@ -29,47 +27,21 @@ def show_timeline():
     end_timestamp = date2timestamp(end_date, timezone, hour_offset)
     events_data = db.fetch_events_data(
         starttime=start_timestamp,
-        endtime=end_timestamp,
-        limit=200)
+        endtime=end_timestamp)
 
-    print(timestamp2datetime(pd.Series(start_timestamp), timezone))
+    # 对数据进行分类
+    cm = ClassifyMethod()
+    classified_data = cm.classify_data(events_data)
 
     # 将获取的数据转换为DataFrame，方便后续处理
     df = pd.DataFrame(events_data)
     df['start_datetime'] = timestamp2datetime(df['starttime'], timezone)
     df['end_datetime'] = timestamp2datetime(df['endtime'], timezone)
+    df['category'] = classified_data
 
-    bar = Bar()
-    # 提取 bucketrow 作为 x 轴数据
-    x_axis = df["bucketrow"].tolist()
-    bar.add_xaxis(x_axis)
-
-    grouped = df.groupby('bucketrow')
-    for group in grouped:
-        print(group)
-
-    # 计算每个任务的时长
-    durations = []
-    for index, row in df.iterrows():
-        start = pd.to_datetime(row["starttime"])
-        end = pd.to_datetime(row["endtime"])
-        duration = (end - start).total_seconds()
-        durations.append(duration)
-
-    # 添加数据
-    bar.add_yaxis(
-        "Duration",
-        durations,
-        label_opts=opts.LabelOpts(position="inside")
-    )
-    # 设置全局配置项
-    bar.set_global_opts(
-        title_opts=opts.TitleOpts(title="Bar Chart representing Gantt-like data"),
-        xaxis_opts=opts.AxisOpts(name="bucketrow"),
-        yaxis_opts=opts.AxisOpts(name="Duration (seconds)"),
-    )
-
-    st_pyecharts = st.components.v1.html(bar.render_embed(), height=400)
+    fig = px.timeline(df, x_start='start_datetime', x_end='end_datetime', y='name', color='category')
+    fig.update_yaxes(autorange="reversed")
+    st.plotly_chart(fig)
 
 
 if __name__ == '__main__':
