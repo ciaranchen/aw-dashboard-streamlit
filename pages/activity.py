@@ -5,12 +5,17 @@ import streamlit as st
 from pyecharts.charts import Sunburst
 from pyecharts import options as opts
 
+import plotly.express as px
+
+
 from database import ActivityWatchDataBase
 from rule_node import RuleNode
 from rules import root
+from utils import date2timestamp
 
 
-def main():
+
+def show_activity():
     st.title("Data Classification and Visualization with RuleNode")
     db = ActivityWatchDataBase()
 
@@ -21,15 +26,7 @@ def main():
     # 高级选项：隐藏在 Collapse 栏目中的小时偏移量下拉菜单
     with st.expander("Advanced Options"):
         hour_offset = st.selectbox("Hour Offset", [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], index=0)
-        timezone = st.selectbox("Timezone", pytz.all_timezones, index=pytz.all_timezones.index("UTC"))
-
-    # 将日期转换为字符串
-    # 将日期转换为时间戳并添加小时偏移量、
-    def date2timestamp(date):
-        date_time = datetime.datetime.combine(date, datetime.time())
-        localtime = pytz.timezone(timezone).localize(date_time) + datetime.timedelta(hours=hour_offset)
-        int_stamp = int(localtime.timestamp())
-        return int_stamp * 1000000000
+        timezone = st.selectbox("Timezone", pytz.all_timezones, index=pytz.all_timezones.index("Asia/Shanghai"))
 
     rows = db.fetch_bucket_data()
     # 将数据转换为列表的列表，以便 st.data_editor 显示
@@ -63,8 +60,8 @@ def main():
             selected_rows = [row[1] for row in edited_data if row[0]]
         else:
             selected_rows = None
-        start_timestamp = date2timestamp(start_date)
-        end_timestamp = date2timestamp(end_date)
+        start_timestamp = date2timestamp(start_date, timezone, hour_offset)
+        end_timestamp = date2timestamp(end_date, timezone, hour_offset)
         # print(start_timestamp)
         # print(end_timestamp)
         events_data = db.fetch_events_data(
@@ -83,7 +80,3 @@ def main():
         sunburst.add("", sunburst_data)
         sunburst.set_global_opts(title_opts=opts.TitleOpts(title="Data Classification Result"))
         st_pyecharts = st.components.v1.html(sunburst.render_embed(), height=400)
-
-
-if __name__ == "__main__":
-    main()

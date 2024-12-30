@@ -21,6 +21,10 @@ class RuleNode:
         if parent:
             parent.children.append(self)
 
+    @property
+    def extend_name(self):
+        return '.'.join(self.name)
+
     def compile_rule(self) -> Optional[Any]:
         if self.rule is None:
             return None
@@ -82,6 +86,8 @@ class RuleNode:
         rule_durations = {rule.id: 0 for rule in rule_lists.values()}
         for item, category_id in zip(data, classified_data):
             add_duration(rule_lists[category_id], item['endtime'] - item['starttime'])
+
+
 
         def build_node_data(index: int, node: 'RuleNode') -> dict:
             children = []

@@ -3,6 +3,7 @@ select events.id,
        events.starttime,
        events.endtime,
        events.bucketrow,
+--        events.endtime - events.starttime        as duration,
        buckets.name,
        buckets.hostname,
        buckets.type,
@@ -20,5 +21,4 @@ select events.id,
        json_extract(events.data, '$.language')  as data_language,
        json_extract(events.data, '$.project')   as data_project
 from events
-         INNER JOIN buckets
-                    ON events.bucketrow = buckets.id;
+         INNER JOIN buckets ON events.bucketrow = buckets.id;
