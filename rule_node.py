@@ -1,4 +1,5 @@
 import itertools
+import json
 from functools import cached_property
 
 from jsonata import Jsonata
@@ -9,25 +10,48 @@ from utils import convert_seconds_to_hhmmss
 
 class RuleNode:
     id_iter = itertools.count()
+    default_color = "#CCCCCC"
+    # weight 为效率分数
+    default_score = 0
 
-    def __init__(self, name: List[str], color: str, weight: float,
+    def __init__(self, name: str,
+                 color: Optional[str] = None, score: Optional[float] = None,
                  parent: Optional['RuleNode'] = None, rule: Optional[str] = None):
         self.id: int = next(self.id_iter)
-        self.name: List[str] = name
-        self.color: str = color
-        self.weight: float = weight
-        self.children: List['RuleNode'] = []
-        self.parent: Optional['RuleNode'] = parent
-        self.rule: Optional[str] = rule
+        self.name = name
+        self.children = []
+        self.parent = parent
+        if color is None:
+            if self.parent:
+                self.color = self.parent.color
+            else:
+                self.color = self.default_color
+        else:
+            self.color = color
+        if score is None:
+            if self.parent:
+                self.score = self.parent.score
+            else:
+                self.score = self.default_score
+        else:
+            self.score = score
+        self.rule = rule
 
-        if parent:
-            parent.children.append(self)
+    @cached_property
+    def names(self):
+        res = [self.name]
+        node = self.parent
+        while node is not None:
+            res.append(node.name)
+            node = node.parent
+        return reversed(res[:-1])
+
+    @cached_property
+    def extend_name(self):
+        return '.'.join(self.names)
 
     @property
-    def extend_name(self):
-        return '.'.join(self.name)
-
-    def compile_rule(self) -> Optional[Any]:
+    def expression(self) -> Optional[Any]:
         if self.rule is None:
             return None
         try:
@@ -38,28 +62,36 @@ class RuleNode:
 
     @cached_property
     def flatten(self) -> List['RuleNode']:
-        flattened = []
-
-        def dfs(node: 'RuleNode') -> None:
-            flattened.append(node)
-            for child in node.children:
-                dfs(child)
-
-        dfs(self)
+        flattened = [self]
+        for c in self.children:
+            flattened.extend(c.flatten)
         return flattened
+
+    @classmethod
+    def load_from_json(cls, json_file_path: str):
+        with open(json_file_path, 'r', encoding='utf-8') as f:
+            json_data = json.load(f)
+        return cls._build_rule_node(json_data, None)
+
+    @classmethod
+    def _build_rule_node(cls, node_data: dict, parent: Optional['RuleNode']) -> 'RuleNode':
+        name = node_data.get('name', '')
+        color = node_data.get('color', None)
+        weight = node_data.get('weight', None)
+        rule = node_data.get('rule', None)
+        # 创建 RuleNode 对象
+        node = cls(name, color, weight, parent, rule)
+        children = node_data.get('children', [])
+        for child_data in children:
+            # 递归创建子节点
+            child = cls._build_rule_node(child_data, node)
+            node.children.append(child)
+        return node
 
 
 class ClassifyMethod:
     def __init__(self):
-        self.root = RuleNode([], "#000000", 1)
-        category1 = RuleNode(["Category1"], "#FF0000", 0.5, self.root, '$.($contains(hostname, "PC"))')
-        category2 = RuleNode(["Category2"], "#00FF00", 0.5, self.root, '$.($contains(hostname, "TB"))')
-        category3 = RuleNode(["Category3"], "#0000FF", 0.5, self.root, '$.($contains(hostname, "Dell"))')
-
-        RuleNode(["Category1", "Web"], "#FFA500", 0.3, category1,
-                 '$.($contains(hostname, "PC") and type="web.tab.current")')
-        RuleNode(["Category1", "Window"], "#FFFF00", 0.2, category1,
-                 '$.($contains(hostname, "PC") and type="currentwindow")')
+        self.root = RuleNode.load_from_json('rules.json')
 
     def rules(self):
         return self.root.flatten
@@ -67,9 +99,9 @@ class ClassifyMethod:
     def classify_data(self, data: List[dict]) -> List[int]:
         classified_data = [0 for i in data]
         # sorted by rule depth
-        rule_list = sorted(self.root.flatten, key=lambda x: len(x.name))
+        rule_list = self.root.flatten
         for rule in rule_list:
-            expression = rule.compile_rule()
+            expression = rule.expression
             if expression is None:
                 continue
             items = expression.evaluate(data)
@@ -104,7 +136,7 @@ class ClassifyMethod:
         parents = []
         durations = []
         for rid in rule_lists.keys():
-            if rid == 0:
+            if rid == self.root.id:
                 continue
             rule = rule_lists[rid]
             names.append(rule.extend_name)
