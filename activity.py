@@ -48,16 +48,17 @@ def main():
         starttime=start_timestamp,
         endtime=end_timestamp,
         bucket_ids=selected_buckets_id)
-    events_data['start_datetime'] = (pd.to_datetime(events_data['starttime'], unit='ns', utc=True)
-                                     .dt.tz_convert(timezone))
-    events_data['end_datetime'] = (pd.to_datetime(events_data['endtime'], unit='ns', utc=True)
-                                   .dt.tz_convert(timezone))
+    events_data['start_datetime'] = pd.to_datetime(events_data['starttime'], unit='ns', utc=True).dt.tz_convert(
+        timezone)
+    events_data['end_datetime'] = pd.to_datetime(events_data['endtime'], unit='ns', utc=True).dt.tz_convert(timezone)
     # 计算 duration
     events_data['duration'] = events_data['end_datetime'] - events_data['start_datetime']
 
     root = Category.load_from_json('rules.json')
     Category.categorize_data(root, events_data)
-    show_sunburst_chart(events_data, root)
+    category_duration = Category.calc_category_duration(root, events_data)
+
+    show_sunburst_chart(category_duration, root)
     show_timeline_chart(events_data, root, start_datetime, end_datetime)
 
 

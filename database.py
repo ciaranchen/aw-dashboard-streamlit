@@ -48,7 +48,7 @@ if __name__ == "__main__":
     data = db.fetch_events_data(
         starttime=1732996800000000000,
         endtime=1735156800000000000,
-        # limit=20,
+        limit=20,
         bucket_ids=[2, 3, 4])
     # print(data)
 
@@ -58,5 +58,12 @@ if __name__ == "__main__":
     Category.categorize_data(root, data)
 
     # 按 category 分组并计算 duration 的总和
+    timezone = 'Asia/Shanghai'
+    data['start_datetime'] = (pd.to_datetime(data['starttime'], unit='ns', utc=True)
+                              .dt.tz_convert(timezone))
+    data['end_datetime'] = (pd.to_datetime(data['endtime'], unit='ns', utc=True)
+                            .dt.tz_convert(timezone))
+    # 计算 duration
+    data['duration'] = data['end_datetime'] - data['start_datetime']
     duration_by_category = data.groupby('category')['duration'].sum()
     print(duration_by_category)

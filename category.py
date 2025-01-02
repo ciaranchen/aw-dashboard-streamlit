@@ -4,6 +4,8 @@ from functools import cached_property
 
 from typing import List, Optional
 
+import pandas as pd
+
 from rules import Rules
 
 
@@ -65,7 +67,7 @@ class Category:
 
     @classmethod
     def _build_rule_node(cls, node_data: dict, parent: Optional['Category']) -> 'Category':
-        name = node_data.get('name', '')
+        name = node_data.get('name', '_ROOT')
         color = node_data.get('color', None)
         weight = node_data.get('weight', None)
         rule = node_data.get('rule', None)
@@ -79,7 +81,7 @@ class Category:
         return node
 
     @classmethod
-    def categorize_data(cls, root, events_data):
+    def categorize_data(cls, root: 'Category', events_data):
         events_data['category'] = root.id
 
         for rule in reversed(root.flatten):
@@ -89,3 +91,20 @@ class Category:
                 filter_data = function(events_data)
                 events_data.loc[(events_data['category'] < rule.id) & filter_data, 'category'] = rule.id
 
+    @classmethod
+    def calc_category_duration(cls, root: 'Category', events_data):
+        data_by_category = events_data.groupby('category')
+        duration_by_category = data_by_category['duration'].sum().to_frame()
+
+        rule_lists = {rule.id: rule for rule in root.flatten}
+        duration_by_category = duration_by_category.reindex(rule_lists.keys(), fill_value=pd.Timedelta(0))
+
+        def add_duration(leaf_node: Category, duration):
+            duration_by_category.loc[leaf_node.id] += duration
+            if leaf_node.parent:
+                add_duration(leaf_node.parent, duration)
+
+        for category, duration in duration_by_category.iterrows():
+            add_duration(rule_lists[category], duration)
+        # print(duration_by_category)
+        return duration_by_category

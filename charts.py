@@ -1,28 +1,10 @@
-import datetime
-
 import pandas as pd
-import pytz
 import streamlit as st
 import plotly.express as px
 
-from database import ActivityWatchDataBase
-from category import ClassifyMethod, Category
-from utils import date2timestamp
 
-
-def show_sunburst_chart(data, root):
-    def add_duration(leaf_node: Category, duration):
-        rule_durations[leaf_node.id] += duration
-        if leaf_node.parent:
-            add_duration(leaf_node.parent, duration)
-
+def show_sunburst_chart(category_durations, root):
     rule_lists = {rule.id: rule for rule in root.flatten}
-    rule_durations = {rule.id: pd.Timedelta(0) for rule in rule_lists.values()}
-    # 按 category 分组并计算 duration 的总和
-    duration_by_category = data.groupby('category')['duration'].sum()
-    # print(duration_by_category)
-    for category, duration in duration_by_category.items():
-        add_duration(rule_lists[category], duration)
 
     names = []
     parents = []
@@ -34,32 +16,28 @@ def show_sunburst_chart(data, root):
         names.append(rule.extend_name)
         # 除了root节点之外其它都有parent。
         parents.append(rule.parent.extend_name)
-        durations.append(rule_durations[rid])
-        colors.append(rule.parent.color)
+        durations.append(category_durations.iloc[rid, 0])
+        colors.append(rule.color)
     categorized_duration = pd.Timedelta(0)
     for child in root.children:
-        categorized_duration += rule_durations[child.id]
+        categorized_duration += category_durations.iloc[child.id, 0]
     # handle uncategories
     names.append('uncategories')
     parents.append(root.extend_name)
-    durations.append(rule_durations[root.id] - categorized_duration)
+    durations.append(category_durations.iloc[root.id, 0] - categorized_duration)
     colors.append(root.color)
-    # handle root
-    names.append(root.extend_name)
-    parents.append(None)
-    durations.append(rule_durations[root.id])
-    colors.append('rgba(255,255,255,1)')
 
-    fig = px.sunburst({
-        "names": names,
-        "parents": parents,
-        "durations": durations,
-        "colors": colors
-    },
-        names="names",
-        parents='parents',
-        values='durations',
-        color="colors"
+    d_values = [d.value for d in durations]
+
+    colors_map = {c: c for c in colors}
+    print(colors)
+
+    fig = px.sunburst(
+        names=names,
+        parents=parents,
+        values=durations,
+        color=colors,
+        color_discrete_map={c: c for c in colors}
     )
 
     st.plotly_chart(fig)
