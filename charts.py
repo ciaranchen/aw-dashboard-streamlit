@@ -10,7 +10,7 @@ from rule_node import ClassifyMethod, RuleNode
 from utils import date2timestamp
 
 
-def build_sunburst_graph(data, root):
+def show_sunburst_chart(data, root):
     def add_duration(leaf_node: RuleNode, duration):
         rule_durations[leaf_node.id] += duration
         if leaf_node.parent:
@@ -62,4 +62,11 @@ def build_sunburst_graph(data, root):
         color="colors"
     )
 
+    st.plotly_chart(fig)
+
+
+def show_timeline_chart(events_data, root, start_datetime, end_datetime):
+    fig = px.timeline(events_data, x_start='start_datetime', x_end='end_datetime', y='name', color='category')
+    fig.update_yaxes(autorange="reversed")
+    fig.update_xaxes(range=[start_datetime, end_datetime])
     st.plotly_chart(fig)

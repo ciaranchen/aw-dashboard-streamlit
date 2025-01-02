@@ -37,11 +37,6 @@ class ActivityWatchDataBase:
             query += " LIMIT ?"
             params.append(limit)
         data = pd.read_sql_query(query, self.conn, params=params)
-
-        data['start_datetime'] = pd.to_datetime(data['starttime'], unit='ns', utc=True).dt.tz_convert('Asia/Shanghai')
-        data['end_datetime'] = pd.to_datetime(data['endtime'], unit='ns', utc=True).dt.tz_convert('Asia/Shanghai')
-        # 计算 duration
-        data['duration'] = data['end_datetime'] - data['start_datetime']
         return data
 
 
