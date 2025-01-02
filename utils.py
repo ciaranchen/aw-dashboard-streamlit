@@ -1,6 +1,4 @@
 import datetime
-
-import pandas as pd
 import pytz
 
 
@@ -15,13 +13,8 @@ def date2timestamp(date, timezone, hour_offset):
 
 
 def timestamp2datetime(timestamp, timezone):
-    # 将纳秒级的 timestamp 转换为秒级
-    timestamp_in_seconds = timestamp / 1000000000
-    # 使用 datetime 模块将秒级时间戳转换为 datetime 对象
-    dt = timestamp_in_seconds.apply(
-        lambda x: datetime.datetime.fromtimestamp(x, pytz.timezone(timezone))
-    )
-    return dt
+    # 使用 datetime 模块将时间戳转换为 datetime 对象
+    return datetime.datetime.fromtimestamp(timestamp / 1000000000, pytz.timezone(timezone))
 
 
 def convert_seconds_to_hhmmss(seconds):
