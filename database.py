@@ -1,13 +1,11 @@
 import sqlite3
+import pandas as pd
 
 
 class ActivityWatchDataBase:
     def __init__(self):
         # 连接到 SQLite 数据库
         self.conn = sqlite3.connect(r'C:\Users\ciaran\AppData\Local\activitywatch\aw-server-rust\sqlite.db')
-        # 设置连接的行工厂为 sqlite3.Row
-        # 这样查询结果将以字典形式返回
-        self.conn.row_factory = sqlite3.Row
 
     def __del__(self):
         self.conn.close()
@@ -40,15 +38,10 @@ class ActivityWatchDataBase:
             query += f" bucketrow IN ({','.join('?' * len(bucket_ids))})"
             params.extend(bucket_ids)
         if limit:
-            query += " LIMIT?"
+            query += " LIMIT ?"
             params.append(limit)
-
-        cursor.execute(query, params)
-        rows = cursor.fetchall()
-        result = []
-        for row in rows:
-            result.append(dict(row))
-        return result
+        data = pd.read_sql_query(query, self.conn, params=params)
+        return data
 
 
 if __name__ == "__main__":
@@ -59,5 +52,22 @@ if __name__ == "__main__":
     data = db.fetch_events_data(
         starttime=1732996800000000000,
         endtime=1735156800000000000,
-        limit=20, bucket_ids=[1, 3, 4])
-    print(json.dumps(data))
+        bucket_ids=[2, 3, 4])
+    data['start_datetime'] = pd.to_datetime(data['starttime'], unit='ns', utc=True).dt.tz_convert('Asia/Shanghai')
+    data['end_datetime'] = pd.to_datetime(data['endtime'], unit='ns', utc=True).dt.tz_convert('Asia/Shanghai')
+    print(data)
+
+    from rule_node import ClassifyMethod
+    from rules_python import Rules
+
+    cm = ClassifyMethod()
+    r = Rules()
+    data['category'] = cm.root.id
+
+    for rule in reversed(cm.root.flatten):
+        function_name = rule.rule if rule.rule else ''
+        function = getattr(r, function_name, None)
+        if function:
+            filter_data = function(data)
+            data.loc[(data['category'] < rule.id) & filter_data, 'category'] = rule.id
+

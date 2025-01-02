@@ -4,21 +4,21 @@
       "name": "Work",
       "color": "#AEA1FF",
       "score": 6,
-      "rule": "$.($contains(data, /豆包|github|gitlab|gogs|jetbrains|Code\\\\.exe|terminal|PowerShell/i))",
+      "rule": "rule_work",
       "children": [
         {
           "name": "Programming",
           "color": "#0F0",
           "score": 10,
-          "rule": "$.($contains(data, /Stack Overflow|vim|CSDN博客|开发者工具|jetbrains|webstorm/i))",
+          "rule": "rule_programming",
           "children": [
             {
               "name": "ActivityWatch",
-              "rule": "$.($contains(data, /ActivityWatch|aw-/i))"
+              "rule": "rule_activitywatch"
             },
             {
               "name": "PersonalProject",
-              "rule": "$.($contains(data, /conf_root|ConfRoot|FineCache|dotfiles|TabSwitcher|CacheFunc/i))"
+              "rule": "rule_personalproject"
             }
           ]
         },
@@ -29,11 +29,11 @@
           "children": [
             {
               "name": "Gateway",
-              "rule": "$.($contains(data, /Gateway|Fedwork|Zotero/i))"
+              "rule": "rule_gateway"
             },
             {
               "name": "ReferenceProjects",
-              "rule": "$.($contains(data, /FedE|FedR/i))"
+              "rule": "rule_referenceprojects"
             }
           ]
         },
@@ -46,20 +46,20 @@
           "name": "Notes",
           "color": "#A4DD00",
           "score": 8,
-          "rule": "$.($contains(data, /SiYuan/i))"
+          "rule": "rule_notes"
         },
         {
           "name": "Maintain",
           "color": "#0062B1",
           "score": 8,
-          "rule": "$.($contains(data, /ciaran_personal\\.kdbx/i))",
+          "rule": "rule_maintain",
           "children": [
             {
-              "rule": "$.($contains(data, /UniGetUI/i))",
+              "rule": "rule_software",
               "name": "Software"
             },
             {
-              "rule": "$.($contains(data, /OpenWrt|OpenClash/i))",
+              "rule": "rule_route",
               "name": "Route"
             }
           ]
@@ -73,26 +73,26 @@
         {
           "name": "Games",
           "color": "#F80",
-          "rule": "$.($contains(data, /Minecraft|Steam/i))"
+          "rule": "rule_games"
         },
         {
           "name": "Video",
           "color": "#F33",
-          "rule": "$.($contains(data, /BiliBili/i))"
+          "rule": "rule_video"
         },
         {
           "name": "Social Media",
           "color": "#FCC400",
-          "rule": "$.($contains(data, /Telegram\\.exe/i))"
+          "rule": "rule_social media"
         },
         {
           "name": "Music",
           "color": "#FA28FF",
-          "rule": "$.($contains(data, /Spotify|Deezer/i))"
+          "rule": "rule_music"
         },
         {
           "name": "VR",
-          "rule": "$.($contains(data, /SideQuest/i))"
+          "rule": "rule_vr"
         },
         {
           "name": "ACG"
@@ -105,11 +105,11 @@
       "children": [
         {
           "name": "IM",
-          "rule": "$.($contains(data, /QQ|Slack|微信/i))"
+          "rule": "rule_im"
         },
         {
           "name": "Email",
-          "rule": "$.($contains(data, /Gmail/i))"
+          "rule": "rule_email"
         }
       ]
     }
