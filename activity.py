@@ -6,7 +6,7 @@ import streamlit as st
 
 from database import ActivityWatchDataBase
 from charts import show_sunburst_chart, show_timeline_chart
-from rule_node import ClassifyMethod
+from category import Category
 from utils import date2timestamp
 
 db = ActivityWatchDataBase()
@@ -55,11 +55,10 @@ def main():
     # 计算 duration
     events_data['duration'] = events_data['end_datetime'] - events_data['start_datetime']
 
-    # print(events_data)
-    cm = ClassifyMethod('rules.json')
-    cm.classify_data(events_data)
-    show_sunburst_chart(events_data, cm.root)
-    show_timeline_chart(events_data, cm.root, start_datetime, end_datetime)
+    root = Category.load_from_json('rules.json')
+    Category.categorize_data(root, events_data)
+    show_sunburst_chart(events_data, root)
+    show_timeline_chart(events_data, root, start_datetime, end_datetime)
 
 
 if __name__ == '__main__':

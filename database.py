@@ -52,10 +52,10 @@ if __name__ == "__main__":
         bucket_ids=[2, 3, 4])
     # print(data)
 
-    from rule_node import ClassifyMethod
+    from category import Category
 
-    cm = ClassifyMethod('rules.json')
-    cm.classify_data(data)
+    root = Category('rules.json')
+    Category.categorize_data(root, data)
 
     # 按 category 分组并计算 duration 的总和
     duration_by_category = data.groupby('category')['duration'].sum()

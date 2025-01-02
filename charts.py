@@ -6,12 +6,12 @@ import streamlit as st
 import plotly.express as px
 
 from database import ActivityWatchDataBase
-from rule_node import ClassifyMethod, RuleNode
+from category import ClassifyMethod, Category
 from utils import date2timestamp
 
 
 def show_sunburst_chart(data, root):
-    def add_duration(leaf_node: RuleNode, duration):
+    def add_duration(leaf_node: Category, duration):
         rule_durations[leaf_node.id] += duration
         if leaf_node.parent:
             add_duration(leaf_node.parent, duration)

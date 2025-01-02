@@ -2,20 +2,21 @@ import itertools
 import json
 from functools import cached_property
 
-from typing import List, Optional, Any
+from typing import List, Optional
 
 from rules import Rules
 
 
-class RuleNode:
+class Category:
     id_iter = itertools.count()
     default_color = "#CCCCCC"
     # weight 为效率分数
     default_score = 0
+    rules_bundle = Rules
 
     def __init__(self, name: str,
                  color: Optional[str] = None, score: Optional[float] = None,
-                 parent: Optional['RuleNode'] = None, rule: Optional[str] = None):
+                 parent: Optional['Category'] = None, rule: Optional[str] = None):
         self.id: int = next(self.id_iter)
         self.name = name
         self.children = []
@@ -50,7 +51,7 @@ class RuleNode:
         return '.'.join(self.names)
 
     @cached_property
-    def flatten(self) -> List['RuleNode']:
+    def flatten(self) -> List['Category']:
         flattened = [self]
         for c in self.children:
             flattened.extend(c.flatten)
@@ -63,7 +64,7 @@ class RuleNode:
         return cls._build_rule_node(json_data, None)
 
     @classmethod
-    def _build_rule_node(cls, node_data: dict, parent: Optional['RuleNode']) -> 'RuleNode':
+    def _build_rule_node(cls, node_data: dict, parent: Optional['Category']) -> 'Category':
         name = node_data.get('name', '')
         color = node_data.get('color', None)
         weight = node_data.get('weight', None)
@@ -77,18 +78,14 @@ class RuleNode:
             node.children.append(child)
         return node
 
+    @classmethod
+    def categorize_data(cls, root, events_data):
+        events_data['category'] = root.id
 
-class ClassifyMethod:
-    def __init__(self, filename):
-        self.root = RuleNode.load_from_json(filename)
-        self.rules = Rules
-
-    def classify_data(self, events_data):
-        events_data['category'] = self.root.id
-
-        for rule in reversed(self.root.flatten):
+        for rule in reversed(root.flatten):
             function_name = rule.rule if rule.rule else ''
-            function = getattr(self.rules, function_name, None)
+            function = getattr(cls.rules_bundle, function_name, None)
             if function:
                 filter_data = function(events_data)
                 events_data.loc[(events_data['category'] < rule.id) & filter_data, 'category'] = rule.id
+
