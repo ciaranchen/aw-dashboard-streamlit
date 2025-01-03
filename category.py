@@ -5,6 +5,7 @@ from functools import cached_property
 from typing import List, Optional
 
 import pandas as pd
+import yaml
 
 from rules import Rules
 
@@ -64,6 +65,12 @@ class Category:
         with open(json_file_path, 'r', encoding='utf-8') as f:
             json_data = json.load(f)
         return cls._build_rule_node(json_data, None)
+
+    @classmethod
+    def load_from_yaml(cls, yaml_file_path: str):
+        with open(yaml_file_path, 'r', encoding='utf-8') as f:
+            yaml_data = yaml.safe_load(f)
+        return cls._build_rule_node(yaml_data, None)
 
     @classmethod
     def _build_rule_node(cls, node_data: dict, parent: Optional['Category']) -> 'Category':

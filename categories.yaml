@@ -1,0 +1,65 @@
+---
+children:
+- name: Work
+  color: "#AEA1FF"
+  score: 6
+  rule: rule_work
+  children:
+  - name: Programming
+    color: "#0F0"
+    score: 10
+    rule: rule_programming
+    children:
+    - name: ActivityWatch
+      rule: rule_activitywatch
+    - name: PersonalProject
+      rule: rule_personalproject
+  - name: Thesis
+    color: "#194D33"
+    score: 10
+    children:
+    - name: Gateway
+      rule: rule_gateway
+    - name: ReferenceProjects
+      rule: rule_referenceprojects
+  - name: Document
+    color: "#68BC00"
+    score: 10
+  - name: Notes
+    color: "#A4DD00"
+    score: 8
+    rule: rule_notes
+  - name: Maintain
+    color: "#0062B1"
+    score: 8
+    rule: rule_maintain
+    children:
+    - rule: rule_software
+      name: Software
+    - rule: rule_route
+      name: Route
+- name: Entertainment
+  color: "#9F0500"
+  children:
+  - name: Games
+    color: "#F80"
+    rule: rule_games
+  - name: Video
+    color: "#F33"
+    rule: rule_video
+  - name: Social Media
+    color: "#FCC400"
+    rule: rule_social media
+  - name: Music
+    color: "#FA28FF"
+    rule: rule_music
+  - name: VR
+    rule: rule_vr
+  - name: ACG
+- name: Comms
+  color: "#9FF"
+  children:
+  - name: IM
+    rule: rule_im
+  - name: Email
+    rule: rule_email
