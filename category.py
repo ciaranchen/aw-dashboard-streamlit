@@ -74,7 +74,7 @@ class Category:
 
     @classmethod
     def _build_rule_node(cls, node_data: dict, parent: Optional['Category']) -> 'Category':
-        name = node_data.get('name', '_ROOT')
+        name = node_data.get('name', '')
         color = node_data.get('color', None)
         weight = node_data.get('weight', None)
         rule = node_data.get('rule', None)
@@ -92,11 +92,30 @@ class Category:
         events_data['category'] = root.id
 
         for rule in reversed(root.flatten):
+            if rule is root:
+                continue
             function_name = rule.rule if rule.rule else ''
             function = getattr(cls.rules_bundle, function_name, None)
             if function:
                 filter_data = function(events_data)
-                events_data.loc[(events_data['category'] < rule.id) & filter_data, 'category'] = rule.id
+                events_data.loc[(events_data['category'] == root.id) & filter_data, 'category'] = rule.id
+        for rule in root.flatten:
+            events_data.loc[events_data['category'] == rule.id, 'category_name'] = rule.extend_name
+            events_data.loc[events_data['category'] == rule.id, 'category_color'] = rule.color
+            events_data.loc[events_data['category'] == rule.id, 'category_score'] = rule.score
+
+        # 新增一列，其值为 name 列的截断
+        title_prefix_len = 11  # len('aw-watcher-')
+        title_truncated_len = 15
+
+        def truncate_title(title):
+            title = title[title_prefix_len:]
+            if len(title) > title_truncated_len:
+                return title[:title_truncated_len] + '...'
+            else:
+                return title
+
+        events_data['bucket_name'] = events_data['name'].apply(truncate_title)
 
     @classmethod
     def calc_category_duration(cls, root: 'Category', events_data):
@@ -106,7 +125,7 @@ class Category:
         rule_lists = {rule.id: rule for rule in root.flatten}
         duration_by_category = duration_by_category.reindex(rule_lists.keys(), fill_value=pd.Timedelta(0))
 
-        def add_duration(leaf_node: Category, duration):
+        def add_duration(leaf_node: Category, duration: pd.Timedelta):
             duration_by_category.loc[leaf_node.id] += duration
             if leaf_node.parent:
                 add_duration(leaf_node.parent, duration)

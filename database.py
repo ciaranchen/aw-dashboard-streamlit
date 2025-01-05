@@ -7,9 +7,6 @@ class ActivityWatchDataBase:
         # 连接到 SQLite 数据库
         self.conn = sqlite3.connect(r'C:\Users\ciaran\AppData\Local\activitywatch\aw-server-rust\sqlite.db')
 
-    def __del__(self):
-        self.conn.close()
-
     def fetch_bucket_data(self):
         data = pd.read_sql_query("SELECT * FROM buckets", self.conn)
         return data
@@ -54,7 +51,7 @@ if __name__ == "__main__":
 
     from category import Category
 
-    root = Category('rules.json')
+    root = Category.load_from_yaml('categories.yaml')
     Category.categorize_data(root, data)
 
     # 按 category 分组并计算 duration 的总和
