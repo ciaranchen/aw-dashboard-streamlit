@@ -5,6 +5,7 @@ from functools import cached_property
 from typing import List, Optional
 
 import pandas as pd
+import streamlit
 import yaml
 
 from rules import Rules
@@ -67,6 +68,7 @@ class Category:
         return cls._build_rule_node(json_data, None)
 
     @classmethod
+    @streamlit.cache_data
     def load_from_yaml(cls, yaml_file_path: str):
         with open(yaml_file_path, 'r', encoding='utf-8') as f:
             yaml_data = yaml.safe_load(f)

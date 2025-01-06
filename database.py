@@ -1,5 +1,6 @@
 import sqlite3
 import pandas as pd
+import streamlit
 
 
 class ActivityWatchDataBase:
@@ -7,11 +8,13 @@ class ActivityWatchDataBase:
         # 连接到 SQLite 数据库
         self.conn = sqlite3.connect(r'C:\Users\ciaran\AppData\Local\activitywatch\aw-server-rust\sqlite.db')
 
-    def fetch_bucket_data(self):
-        data = pd.read_sql_query("SELECT * FROM buckets", self.conn)
+    @streamlit.cache_data
+    def fetch_bucket_data(_self):
+        data = pd.read_sql_query("SELECT * FROM buckets", _self.conn)
         return data
 
-    def fetch_events_data(self, starttime=None, endtime=None, limit=None, bucket_ids=None):
+    @streamlit.cache_data
+    def fetch_events_data(_self, starttime=None, endtime=None, limit=None, bucket_ids=None):
         query = "SELECT * FROM view_events"
         params = []
         if starttime and endtime:
@@ -33,7 +36,7 @@ class ActivityWatchDataBase:
         if limit:
             query += " LIMIT ?"
             params.append(limit)
-        data = pd.read_sql_query(query, self.conn, params=params)
+        data = pd.read_sql_query(query, _self.conn, params=params)
         return data
 
 
