@@ -132,5 +132,10 @@ class Category:
 
         for category, duration in duration_by_category.iterrows():
             add_duration(rule_lists[category], duration)
-        # print(duration_by_category)
+
+        duration_by_category['category'] = duration_by_category.index
+        for rule in rule_lists.values():
+            duration_by_category.loc[duration_by_category['category'] == rule.id, 'category_name'] = rule.extend_name
+            duration_by_category.loc[duration_by_category['category'] == rule.id, 'category_color'] = rule.color
+            duration_by_category.loc[duration_by_category['category'] == rule.id, 'category_score'] = rule.score
         return duration_by_category
