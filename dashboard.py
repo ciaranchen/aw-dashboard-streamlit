@@ -20,12 +20,10 @@ def main():
     with st.form('activity_form'):
         # 日期选择器
         date_col1, date_col2 = st.columns(2)
-        start_date = date_col1.date_input("Start Date", datetime.date(2024, 12, 1), max_value=datetime.date.today())
-        default_end_date = datetime.date(2024, 12, 5)
-        if start_date >= default_end_date:
-            default_end_date = start_date
-        end_date = date_col2.date_input("End Date", default_end_date, max_value=datetime.date.today(),
-                                        min_value=start_date)
+        today = datetime.date.today()
+        first_day_of_month = today.replace(day=1)
+        start_date = date_col1.date_input("Start Date", first_day_of_month, max_value=today)
+        end_date = date_col2.date_input("End Date", today, max_value=today, min_value=start_date)
 
         # 高级选项：隐藏在 Collapse 栏目中的小时偏移量下拉菜单
         with st.expander("Advanced Options"):

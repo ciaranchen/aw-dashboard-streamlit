@@ -26,7 +26,7 @@ def show_sunburst_chart(category_durations, root):
     colors.append(root.color)
 
     # handle fake root
-    root_name = '_ROOT'
+    root_name = '_'
     names.append(root_name)
     for i, p in enumerate(parents):
         if len(p) == 0:
@@ -40,10 +40,9 @@ def show_sunburst_chart(category_durations, root):
         parents=parents,
         values=durations,
         color=colors,
-        title='Activity Sunburst',
         color_discrete_map={c: c for c in colors}
     )
-
+    st.title('Sunburst')
     st.plotly_chart(fig)
 
 
